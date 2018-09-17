@@ -14,3 +14,7 @@ bot.on('document', chatter => {
     bot.kickChatMember(chatter.chat.id,chatter.from.id);
   }
 });
+
+bot.onText(/^(\/health)$/, (msg, match) => {
+    bot.sendMessage(msg.chat.id, "BANdicoot is still up!",{parse_mode : "Markdown"});
+});
