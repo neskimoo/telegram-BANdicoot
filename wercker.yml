@@ -1,0 +1,46 @@
+box: node
+
+build:
+  steps:
+     - npm-install
+
+deploy:
+  steps:
+    - script:
+        name: install nodemon
+        code: npm install -g nodemon
+    - internal/docker-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        repository: $DOCKER_REPO
+        registry: https://registry.hub.docker.com/v2
+        cmd: /bin/bash -c "cd /pipeline/source && nodemon"
+    - mktemp:
+        envvar: PRIVATEKEY_PATH
+    - create-file:
+        name: write key
+        filename: $PRIVATEKEY_PATH
+        content: $DIGITAL_OCEAN_PRIVATE
+        overwrite: true
+        hide-from-log: true
+    - add-to-known_hosts:
+        hostname: $SERVER_IP
+    - script:
+        name: pull latest node image
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker pull $DOCKER_REPO:latest
+    - script:
+        name: stop running container
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker stop $APPLICATION_NAME || echo failed to stop running container
+    - script:
+        name: remove stopped container
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker rm -v $APPLICATION_NAME || echo failed to remove stopped container
+    - script:
+        name: remove image behind stopped container
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker rmi $DOCKER_REPO:current || echo failed to remove image behind stopped container
+    - script:
+        name: tag newly pulled image
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker tag $DOCKER_REPO:latest $DOCKER_REPO:current || echo failed to change tag
+    - script:
+        name: run new container
+        code: ssh -i $PRIVATEKEY_PATH -l $USERNAME $SERVER_IP docker run -d -e \"BOT_TOKEN=$BOT_TOKEN\" --name $APPLICATION_NAME $DOCKER_REPO:current
+

@@ -1,0 +1,15 @@
+{
+  "name": "BANdicoot",
+  "version": "0.0.1",
+  "description": "Simple telegram bot for removing users that send attachments to groups.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Kieran Nestor",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "node-telegram-bot-api": "^0.30.0"
+  }
+}
